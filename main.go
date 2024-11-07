@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anamivale/ls/formating"
 	"github.com/anamivale/ls/listing"
 
 	"github.com/anamivale/ls/options"
@@ -44,13 +45,29 @@ func main() {
 	// Optios function gets the flags and sets them to true or false
 	flagsStruct := options.Options(flags)
 
-	for _, path := range paths {
+	for i, path := range paths {
+		if len(paths) != 1 {
+			fmt.Println(path + ":")
+		}
 		entries, err := listing.GetDirContent(path, flagsStruct)
 		if err != nil {
 			fmt.Println(err.Error())
-		} else {
-			fmt.Println(path)
+			return
 		}
-		fmt.Println(entries)
+		if flagsStruct.Recursive {
+			err := listing.GetDirContentRecursively(path, flagsStruct)
+			if err != nil {
+				return
+			}
+			return
+		}
+		if flagsStruct.Long {
+			formating.LongFormat(entries, flagsStruct)
+		} else {
+			formating.Format(entries)
+		}
+		if i != len(paths)-1 {
+			fmt.Println()
+		}
 	}
 }
