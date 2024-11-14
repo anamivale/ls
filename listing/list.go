@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"strings"
+	"syscall"
 
 	"github.com/anamivale/ls/formating"
 	"github.com/anamivale/ls/middlewares"
@@ -63,6 +64,9 @@ func GetDirContentRecursively(path string, flags options.Flags) error {
 		return errors.New("go run .: cannot access " + path + ": No such file or directory")
 	}
 	fmt.Println(path + ":")
+	info, _ := os.Stat(path)
+	blocks := info.Sys().(*syscall.Stat_t).Blocks
+	fmt.Printf("total %d %s\n", blocks, path)
 	if flags.Long {
 		formating.LongFormat(entries, flags)
 	} else {
@@ -71,7 +75,6 @@ func GetDirContentRecursively(path string, flags options.Flags) error {
 	fmt.Println()
 	rError := errors.New("")
 	for _, entry := range entries {
-		// Append the current entry to the result
 		// If the entry is a directory, recursively get its contents
 		if entry.IsDir() {
 			if entry.Name() == "." || entry.Name() == ".." {
