@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"strings"
-	"syscall"
 
 	"github.com/anamivale/ls/formating"
 	"github.com/anamivale/ls/middlewares"
@@ -64,11 +63,11 @@ func GetDirContentRecursively(path string, flags options.Flags) error {
 		return errors.New("go run .: cannot access " + path + ": No such file or directory")
 	}
 	fmt.Println(path + ":")
-	info, _ := os.Stat(path)
-	blocks := info.Sys().(*syscall.Stat_t).Blocks
-	fmt.Printf("total %d %s\n", blocks, path)
+
 	if flags.Long {
-		formating.LongFormat(entries, flags)
+		width := formating.GetBlocks(entries)
+		fmt.Printf("total %d\n", width.Blocks/2)
+		formating.LongFormat(path, entries, flags)
 	} else {
 		formating.Format(entries)
 	}
@@ -80,7 +79,7 @@ func GetDirContentRecursively(path string, flags options.Flags) error {
 			if entry.Name() == "." || entry.Name() == ".." {
 				continue
 			}
-			subDirPath := JoinPaths(path, entry.Name())
+			subDirPath := middlewares.JoinPaths(path, entry.Name())
 
 			err := GetDirContentRecursively(subDirPath, flags)
 			rError = err
@@ -88,12 +87,4 @@ func GetDirContentRecursively(path string, flags options.Flags) error {
 	}
 
 	return rError
-}
-
-func JoinPaths(path, entryName string) string {
-	// Check if the base path already ends with a separator
-	if path[len(path)-1] == os.PathSeparator {
-		return path + entryName
-	}
-	return path + string(os.PathSeparator) + entryName
 }

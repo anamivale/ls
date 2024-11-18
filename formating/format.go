@@ -3,23 +3,40 @@ package formating
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"os/user"
 	"strconv"
 	"syscall"
 
+	"github.com/anamivale/ls/middlewares"
 	"github.com/anamivale/ls/options"
 )
 
-func LongFormat(entries []fs.DirEntry, flags options.Flags) {
-	blocks,permw,userrw, groupw, linkw, sizew, datwe, namew := GetBlocks(entries)
-	
-	fmt.Printf("total %d\n", blocks/2)
+type WidthAndBlocks struct {
+	Blocks int
+	Permw  int
+	Userrw int
+	Groupw int
+	Linkw  int
+	Sizew  int
+	Datew  int
+	Namew  int
+}
+
+func LongFormat(path string, entries []fs.DirEntry, flags options.Flags) {
+	width := GetBlocks(entries)
+
 	for _, entry := range entries {
 		info, _ := entry.Info()
 
 		perm := info.Mode()
 		link := info.Sys().(*syscall.Stat_t).Nlink
-		size := info.Size()
+		size := strconv.Itoa(int(info.Size()))
+		if info.Mode()&os.ModeCharDevice != 0 || info.Mode()&os.ModeDevice != 0 {
+			major := middlewares.JoinPaths(path, entry.Name())
+		
+			fmt.Println(major)
+		}
 		date := info.ModTime().Format("Jan _2 15:04")
 		name := entry.Name()
 		gid := fmt.Sprint(info.Sys().(*syscall.Stat_t).Gid)
@@ -29,11 +46,11 @@ func LongFormat(entries []fs.DirEntry, flags options.Flags) {
 		userr := Userr.Username
 		Group, _ := user.LookupGroupId(gid)
 		group := Group.Name
-		format := fmt.Sprintf("%%%ds %%-%dd %%-%ds %%%ds %%%dd %%%ds %%-%ds\n",
-		permw, linkw, userrw, groupw, sizew, datwe, namew)
+		format := fmt.Sprintf("%%%ds %%%dd %%-%ds %%%-ds %%%dd %%%ds %%-%ds\n",
+			width.Permw, width.Linkw, width.Userrw, width.Groupw, width.Sizew, width.Datew, width.Namew)
 
-	// Print the formatted line
-	fmt.Printf(format, perm, link, userr, group, size, date, name)
+		// Print the formatted line
+		fmt.Printf(format, perm, link, userr, group, size, date, name)
 
 	}
 }
@@ -44,7 +61,9 @@ func Format(entries []fs.DirEntry) {
 	}
 	fmt.Println()
 }
-func GetBlocks(entries []fs.DirEntry) (int, int, int, int, int, int, int, int) {
+
+func GetBlocks(entries []fs.DirEntry) WidthAndBlocks {
+	var width WidthAndBlocks
 	blocks := 0
 	info, _ := entries[0].Info()
 	perm := len(info.Mode().String())
@@ -93,7 +112,14 @@ func GetBlocks(entries []fs.DirEntry) (int, int, int, int, int, int, int, int) {
 		blocks += int(info1.Sys().(*syscall.Stat_t).Blocks)
 
 	}
+	width.Blocks = blocks
+	width.Permw = perm
+	width.Linkw = link
+	width.Userrw = userr
+	width.Groupw = group
+	width.Sizew = size
+	width.Datew = date
+	width.Namew = name
+	return width
 	// fmt.Println(perm, link, userr, group, size, date, name)
-
-	return blocks,perm, link, userr, group, size, date, name
 }

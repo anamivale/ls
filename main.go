@@ -44,10 +44,17 @@ func main() {
 
 	// Optios function gets the flags and sets them to true or false
 	flagsStruct := options.Options(flags)
+	paths = listing.PathSort(paths)
 
 	for i, path := range paths {
+		info, err := os.Lstat(path)
+		if err != nil {
+			fmt.Println("go run .: cannot access " + path + ": No such file or directory")
+		}
 		if len(paths) != 1 {
-			fmt.Println(path + ":")
+			if info.IsDir() {
+				fmt.Println(path + ":")
+			}
 		}
 		entries, err := listing.GetDirContent(path, flagsStruct)
 		if err != nil {
@@ -62,12 +69,25 @@ func main() {
 			return
 		}
 		if flagsStruct.Long {
-			formating.LongFormat(entries, flagsStruct)
+			// check if file
+
+			if info.IsDir() {
+				width := formating.GetBlocks(entries)
+				fmt.Printf("total %d\n", width.Blocks/2)
+
+				formating.LongFormat(path,entries, flagsStruct)
+
+			} else {
+				formating.LongFormat(path,entries, flagsStruct)
+			}
+			// print blocks
 		} else {
 			formating.Format(entries)
 		}
 		if i != len(paths)-1 {
-			fmt.Println()
+			if info.IsDir() {
+				fmt.Println()
+			}
 		}
 	}
 }
