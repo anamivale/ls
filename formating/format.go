@@ -33,9 +33,10 @@ func LongFormat(path string, entries []fs.DirEntry, flags options.Flags) {
 		link := info.Sys().(*syscall.Stat_t).Nlink
 		size := strconv.Itoa(int(info.Size()))
 		if info.Mode()&os.ModeCharDevice != 0 || info.Mode()&os.ModeDevice != 0 {
-			major := middlewares.JoinPaths(path, entry.Name())
+			path := middlewares.JoinPaths(path, entry.Name())
+			major, minor := middlewares.MajorMinor(path)
 		
-			fmt.Println(major)
+			fmt.Println(major, minor)
 		}
 		date := info.ModTime().Format("Jan _2 15:04")
 		name := entry.Name()
