@@ -65,7 +65,7 @@ func GetDirContentRecursively(path string, flags options.Flags) error {
 	fmt.Println(path + ":")
 
 	if flags.Long {
-		width := formating.GetBlocks(entries)
+		width := formating.GetBlocks(path,entries)
 		fmt.Printf("total %d\n", width.Blocks/2)
 		formating.LongFormat(path, entries, flags)
 	} else {

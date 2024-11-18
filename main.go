@@ -72,7 +72,7 @@ func main() {
 			// check if file
 
 			if info.IsDir() {
-				width := formating.GetBlocks(entries)
+				width := formating.GetBlocks(path,entries)
 				fmt.Printf("total %d\n", width.Blocks/2)
 
 				formating.LongFormat(path,entries, flagsStruct)
