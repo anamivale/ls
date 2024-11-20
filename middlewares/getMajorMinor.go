@@ -7,7 +7,6 @@ import (
 )
 
 func MajorMinor(devicePath string) (int, int) {
-
 	// Get file info
 	fileInfo, err := os.Stat(devicePath)
 	if err != nil {
@@ -24,8 +23,8 @@ func MajorMinor(devicePath string) (int, int) {
 	}
 
 	// Extract major and minor numbers
-	major := (stat.Rdev >> 8) & 0xff // Major number
-	minor := stat.Rdev & 0xff        // Minor number
+	major := (stat.Rdev >> 8) & 0xff                            // Major number
+	minor := (stat.Rdev & 0xff) | ((stat.Rdev >> 12) & 0xfff00) // Minor number
 
 	return int(major), int(minor)
 }

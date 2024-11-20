@@ -7,6 +7,7 @@ import (
 	"os/user"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/anamivale/ls/middlewares"
 	"github.com/anamivale/ls/options"
@@ -36,7 +37,7 @@ func LongFormat(path string, entries []fs.DirEntry, flags options.Flags) {
 		link := info.Sys().(*syscall.Stat_t).Nlink
 		size := strconv.Itoa(int(info.Size()))
 
-		date := info.ModTime().Format("Jan _2 15:04")
+		date := formatTime(info.ModTime())
 		name := entry.Name()
 		gid := fmt.Sprint(info.Sys().(*syscall.Stat_t).Gid)
 		uid := fmt.Sprint(info.Sys().(*syscall.Stat_t).Uid)
@@ -73,14 +74,14 @@ func LongFormat(path string, entries []fs.DirEntry, flags options.Flags) {
 				target, err := os.Readlink(path1)
 				name = name + " -> " + target
 				if err == nil {
-					format := fmt.Sprintf("%%%ds %%%dd %%-%ds %%%-ds %%%ds %%%ds %%-%ds\n",
+					format := fmt.Sprintf("%%%ds %%%dd %%-%ds %%-%ds %%%ds %%%ds  %%-%ds\n",
 						width.Permw, width.Linkw, width.Userrw, width.Groupw, width.Sizew, width.Datew, width.Namew)
 
 					// Print the formatted line
 					fmt.Printf(format, perm, link, userr, group, size, date, name)
 				}
 			} else {
-				format := fmt.Sprintf("%%%ds %%%dd %%-%ds %%%-ds %%%ds %%%ds %%-%ds\n",
+				format := fmt.Sprintf("%%%ds %%%dd %%-%ds %%-%ds %%%ds %%%ds  %%-%ds\n",
 					width.Permw, width.Linkw, width.Userrw, width.Groupw, width.Sizew, width.Datew, width.Namew)
 
 				// Print the formatted line
@@ -182,4 +183,15 @@ func GetBlocks(path string, entries []fs.DirEntry) WidthAndBlocks {
 	width.Minor = Minor
 	return width
 	// fmt.Println(perm, link, userr, group, size, date, name)
+}
+
+func formatTime(t time.Time) string {
+	now := time.Now()
+	sixMonthsAgo := now.AddDate(0, -6, 0)
+
+	if t.After(sixMonthsAgo) {
+		return t.Format("Jan _2 15:04")
+	} else {
+		return t.Format("Jan _2  2006")
+	}
 }
