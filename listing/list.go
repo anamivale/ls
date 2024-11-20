@@ -20,8 +20,8 @@ func GetDirContent(path string, flags options.Flags) ([]fs.DirEntry, error) {
 	if chacker != nil {
 		return []fs.DirEntry{chacker}, nil
 	}
-	parentDir, _ := os.Lstat("..")
-	curretDir, _ := os.Lstat(".")
+	parentDir, _ := os.Lstat(path + "/..")
+	curretDir, _ := os.Lstat(path + "/.")
 	dotDir := fs.FileInfoToDirEntry(curretDir)
 	dotDotDir := fs.FileInfoToDirEntry(parentDir)
 
@@ -65,7 +65,7 @@ func GetDirContentRecursively(path string, flags options.Flags) error {
 	fmt.Println(path + ":")
 
 	if flags.Long {
-		width := formating.GetBlocks(path,entries)
+		width := formating.GetBlocks(path, entries)
 		fmt.Printf("total %d\n", width.Blocks/2)
 		formating.LongFormat(path, entries, flags)
 	} else {
