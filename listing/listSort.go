@@ -10,6 +10,23 @@ import (
 func Sort(entries []fs.DirEntry) {
 	for i := 0; i < len(entries); i++ {
 		for j := 0; j < len(entries); j++ {
+			// Special cases for '.' and '..'
+			if entries[i].Name() == "." && entries[j].Name() != "." {
+				entries[i], entries[j] = entries[j], entries[i]
+				continue
+			}
+			if entries[j].Name() == "." {
+				continue
+			}
+			if entries[i].Name() == ".." && entries[j].Name() != ".." && entries[j].Name() != "." {
+				entries[i], entries[j] = entries[j], entries[i]
+				continue
+			}
+			if entries[j].Name() == ".." {
+				continue
+			}
+
+			// General comparison logic
 			if strings.ToLower(RemoveSpecialCharacters(entries[i].Name())) < strings.ToLower(RemoveSpecialCharacters(entries[j].Name())) {
 				entries[i], entries[j] = entries[j], entries[i]
 			}
@@ -18,12 +35,9 @@ func Sort(entries []fs.DirEntry) {
 }
 
 func SortInReverse(entries []fs.DirEntry) {
-	for i := 0; i < len(entries); i++ {
-		for j := 0; j < len(entries); j++ {
-			if strings.ToLower(RemoveSpecialCharacters(entries[i].Name())) > strings.ToLower(RemoveSpecialCharacters(entries[j].Name())) {
-				entries[i], entries[j] = entries[j], entries[i]
-			}
-		}
+	n := len(entries)
+	for i := 0; i < n/2; i++ {
+		entries[i], entries[n-1-i] = entries[n-1-i], entries[i]
 	}
 }
 
@@ -73,6 +87,7 @@ func PathSort(paths []string) []string {
 		info, err := os.Lstat(v)
 		if err != nil {
 			fmt.Println("go run .: cannot access " + v + ": No such file or directory")
+			os.Exit(0)
 		}
 
 		if info.IsDir() {
