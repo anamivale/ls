@@ -46,46 +46,28 @@ func LongFormat(path string, entries []fs.DirEntry, flags options.Flags) {
 		userr := Userr.Username
 		Group, _ := user.LookupGroupId(gid)
 		group := Group.Name
-		if group == "video" {
-			perm = perm + "+"
-		}
 
 		if info.Mode()&os.ModeCharDevice != 0 || info.Mode()&os.ModeDevice != 0 {
 			major, minor := middlewares.MajorMinor(path1)
-			if info.Mode()&os.ModeSymlink != 0 {
 
-				target, err := os.Readlink(path1)
-				name = name + " -> " + target
-				if err == nil {
-					format := fmt.Sprintf("%%%ds %%%dd %%-%ds %%%-ds %%%dd, %%%dd %%%ds %%-%ds\n",
-						width.Permw, width.Linkw, width.Userrw, width.Groupw, width.Major, width.Minor, width.Datew, width.Namew)
+			fmt.Printf("%*s %*d %-*s %-*s %*d, %*d %s %s\n",
+				width.Permw, perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
+				width.Major, major, width.Minor, minor, date, name)
 
-					fmt.Printf(format, perm, link, userr, group, major, minor, date, name)
-				}
-			} else {
-				format := fmt.Sprintf("%%%ds %%%dd %%-%ds %%%-ds %%%dd, %%%dd %%%ds %%-%ds\n",
-					width.Permw, width.Linkw, width.Userrw, width.Groupw, width.Major, width.Minor, width.Datew, width.Namew)
-
-				fmt.Printf(format, perm, link, userr, group, major, minor, date, name)
-			}
 		} else {
 			if info.Mode()&os.ModeSymlink != 0 {
 
 				target, err := os.Readlink(path1)
 				name = name + " -> " + target
 				if err == nil {
-					format := fmt.Sprintf("%%%ds %%%dd %%-%ds %%-%ds %%%ds %%%ds  %%-%ds\n",
-						width.Permw, width.Linkw, width.Userrw, width.Groupw, width.Sizew, width.Datew, width.Namew)
-
-					// Print the formatted line
-					fmt.Printf(format, perm, link, userr, group, size, date, name)
+					fmt.Printf("%*s %*d %-*s %-*s %*s %s %s\n",
+						width.Permw, perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
+						width.Sizew, size, date, name)
 				}
 			} else {
-				format := fmt.Sprintf("%%%ds %%%dd %%-%ds %%-%ds %%%ds %%%ds  %%-%ds\n",
-					width.Permw, width.Linkw, width.Userrw, width.Groupw, width.Sizew, width.Datew, width.Namew)
-
-				// Print the formatted line
-				fmt.Printf(format, perm, link, userr, group, size, date, name)
+				fmt.Printf("%*s %*d %-*s %-*s %*s %s %s\n",
+					width.Permw, perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
+					width.Sizew, size, date, name)
 			}
 		}
 
@@ -132,7 +114,7 @@ func GetBlocks(path string, entries []fs.DirEntry) WidthAndBlocks {
 			if majors > Major {
 				Major = majors
 			}
-			size1 = len(strconv.Itoa(major)+",") + len(strconv.Itoa(minor)) + 2
+			size1 = len(strconv.Itoa(major)+",") + len(strconv.Itoa(minor))+1
 		}
 		perm1 := len(middlewares.ModeToString(info.Mode()))
 
@@ -141,9 +123,7 @@ func GetBlocks(path string, entries []fs.DirEntry) WidthAndBlocks {
 		Userr1, _ := user.LookupId(fmt.Sprint(info1.Sys().(*syscall.Stat_t).Uid))
 		userr1 := len(Userr1.Username)
 		Group1, _ := user.LookupGroupId(fmt.Sprint(info1.Sys().(*syscall.Stat_t).Gid))
-		if Group1.Name == "video" {
-			perm1 = perm1 + len("+")
-		}
+
 		group1 := len(Group1.Name)
 		if perm1 > perm {
 			perm = perm1
