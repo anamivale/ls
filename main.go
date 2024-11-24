@@ -20,6 +20,10 @@ func main() {
 	args := os.Args
 	for _, arg := range args[1:] {
 		if arg == "-" {
+			paths = append(paths, arg)
+			continue
+		}
+		if arg == "-" {
 			paths = append(paths, ".")
 		} else if arg == "--l" {
 			continue
@@ -72,13 +76,13 @@ func main() {
 			// check if file
 
 			if info.IsDir() {
-				width := formating.GetBlocks(path,entries)
+				width := formating.GetBlocks(path, entries)
 				fmt.Printf("total %d\n", width.Blocks/2)
 
-				formating.LongFormat(path,entries, flagsStruct)
+				formating.LongFormat(path, entries, flagsStruct)
 
 			} else {
-				formating.LongFormat(path,entries, flagsStruct)
+				formating.LongFormat(path, entries, flagsStruct)
 			}
 			// print blocks
 		} else {

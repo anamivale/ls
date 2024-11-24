@@ -42,6 +42,9 @@ func GetDirContent(path string, flags options.Flags) ([]fs.DirEntry, error) {
 		}
 		output = append(output, entry)
 	}
+	if output == nil {
+		return nil, nil
+	}
 	Sort(output)
 
 	if flags.Time {
