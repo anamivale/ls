@@ -29,48 +29,61 @@ type WidthAndBlocks struct {
 func LongFormat(path string, entries []fs.DirEntry, flags options.Flags) {
 	width := GetBlocks(path, entries)
 
+	// Print total blocks if more than one entry
+
 	for _, entry := range entries {
-		info, _ := entry.Info()
-		path1 := middlewares.JoinPaths(path, entry.Name())
-
-		perm := middlewares.ModeToString(info.Mode())
-		link := info.Sys().(*syscall.Stat_t).Nlink
-		size := strconv.Itoa(int(info.Size()))
-
-		date := formatTime(info.ModTime())
-		name := entry.Name()
-		gid := fmt.Sprint(info.Sys().(*syscall.Stat_t).Gid)
-		uid := fmt.Sprint(info.Sys().(*syscall.Stat_t).Uid)
-
-		Userr, _ := user.LookupId(uid)
-		userr := Userr.Username
-		Group, _ := user.LookupGroupId(gid)
-		group := Group.Name
-
-		if info.Mode()&os.ModeCharDevice != 0 || info.Mode()&os.ModeDevice != 0 {
-			major, minor := middlewares.MajorMinor(path1)
-
-			fmt.Printf("%*s %*d %-*s %-*s %*d, %*d %s %s\n",
-				width.Permw, perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
-				width.Major, major, width.Minor, minor, date, name)
-
-		} else {
-			if info.Mode()&os.ModeSymlink != 0 {
-
-				target, err := os.Readlink(path1)
-				name = name + " -> " + target
-				if err == nil {
-					fmt.Printf("%*s %*d %-*s %-*s %*s %s %s\n",
-						width.Permw, perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
-						width.Sizew, size, date, name)
-				}
-			} else {
-				fmt.Printf("%*s %*d %-*s %-*s %*s %s %s\n",
-					width.Permw, perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
-					width.Sizew, size, date, name)
-			}
+		info, err := entry.Info()
+		if err != nil {
+			continue
 		}
 
+		path1 := middlewares.JoinPaths(path, entry.Name())
+
+		// Get file metadata
+		perm := middlewares.ModeToString(info.Mode())
+		link := info.Sys().(*syscall.Stat_t).Nlink
+		size := strconv.FormatInt(info.Size(), 10)
+		date := formatTime(info.ModTime())
+		name := entry.Name()
+
+		// Get user and group info
+		uid := fmt.Sprint(info.Sys().(*syscall.Stat_t).Uid)
+		gid := fmt.Sprint(info.Sys().(*syscall.Stat_t).Gid)
+
+		userr := uid // Fallback to UID if username lookup fails
+		group := gid // Fallback to GID if group lookup fails
+
+		if Userr, err := user.LookupId(uid); err == nil {
+			userr = Userr.Username
+		}
+		if Group, err := user.LookupGroupId(gid); err == nil {
+			group = Group.Name
+		}
+
+		// Handle different file types
+		switch {
+		case info.Mode()&os.ModeCharDevice != 0 || info.Mode()&os.ModeDevice != 0:
+			// Device files: show major,minor instead of size
+			major, minor := middlewares.MajorMinor(path1)
+			fmt.Printf("%s %*d %-*s %-*s %*d, %*d %s %s\n",
+				perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
+				width.Major, major, width.Minor, minor, date, name)
+
+		case info.Mode()&os.ModeSymlink != 0:
+			// Symbolic links: show target
+			target, err := os.Readlink(path1)
+			if err == nil {
+				fmt.Printf("%s %*d %-*s %-*s %*s %s %s -> %s\n",
+					perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
+					width.Sizew, size, date, name, target)
+			}
+
+		default:
+			// Regular files and directories
+			fmt.Printf("%s %*d %-*s %-*s %*s %s %s\n",
+				perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
+				width.Sizew, size, date, name)
+		}
 	}
 }
 
@@ -83,6 +96,9 @@ func Format(entries []fs.DirEntry) {
 
 func GetBlocks(path string, entries []fs.DirEntry) WidthAndBlocks {
 	var width WidthAndBlocks
+	if len(entries) < 1 {
+		return width
+	}
 	blocks := 0
 	info, _ := entries[0].Info()
 	perm := len(middlewares.ModeToString(info.Mode()))
@@ -114,7 +130,7 @@ func GetBlocks(path string, entries []fs.DirEntry) WidthAndBlocks {
 			if majors > Major {
 				Major = majors
 			}
-			size1 = len(strconv.Itoa(major)+",") + len(strconv.Itoa(minor))+1
+			size1 = len(strconv.Itoa(major)+",") + len(strconv.Itoa(minor)) + 1
 		}
 		perm1 := len(middlewares.ModeToString(info.Mode()))
 
