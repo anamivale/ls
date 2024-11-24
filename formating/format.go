@@ -50,8 +50,8 @@ func LongFormat(path string, entries []fs.DirEntry, flags options.Flags) {
 		if info.Mode()&os.ModeCharDevice != 0 || info.Mode()&os.ModeDevice != 0 {
 			major, minor := middlewares.MajorMinor(path1)
 
-			fmt.Printf("%*s %*d %-*s %-*s %*d, %*d %s %s\n",
-				width.Permw, perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
+			fmt.Printf("%s %*d %-*s %-*s %*d, %*d %s %s\n",
+				perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
 				width.Major, major, width.Minor, minor, date, name)
 
 		} else {
@@ -114,7 +114,7 @@ func GetBlocks(path string, entries []fs.DirEntry) WidthAndBlocks {
 			if majors > Major {
 				Major = majors
 			}
-			size1 = len(strconv.Itoa(major)+",") + len(strconv.Itoa(minor))+1
+			size1 = len(strconv.Itoa(major)+",") + len(strconv.Itoa(minor)) + 1
 		}
 		perm1 := len(middlewares.ModeToString(info.Mode()))
 
