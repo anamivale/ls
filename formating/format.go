@@ -60,11 +60,12 @@ func LongFormat(path string, entries []fs.DirEntry, flags options.Flags) {
 			group = Group.Name
 		}
 
+
 		// Handle different file types
 		switch {
 		case info.Mode()&os.ModeCharDevice != 0 || info.Mode()&os.ModeDevice != 0:
 			// Device files: show major,minor instead of size
-			major, minor := middlewares.MajorMinor(path1)
+			major, minor := middlewares.MajorMinor(
 			fmt.Printf("%s %*d %-*s %-*s %*d, %*d %s %s\n",
 				perm, width.Linkw, link, width.Userrw, userr, width.Groupw, group,
 				width.Major, major, width.Minor, minor, date, name)
